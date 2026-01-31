@@ -884,12 +884,12 @@ LoadConfig()
 local ModernUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Rizeniii/diamond/refs/heads/main/zero/main"))()
 
 local Window = ModernUI.new({
-    Title = "Cat Hub",
+    Title = "Zenith hub + stormx7rlk",
     SubTitle = "Blox Fruits",
-    Icon = {"rbxassetid://138770682187300", "rbxassetid://110961158970233"},
+    Icon = {"rbxassetid://101927546713008", "rbxassetid://101927546713008"},
     IconFPS = 0.1,
     FloatingButton = {
-        Icon = {"rbxassetid://138770682187300", "rbxassetid://110961158970233"},
+        Icon = {"rbxassetid://101927546713008", "rbxassetid://101927546713008"},
         Size = 52,
         Position = UDim2.new(1, -70, 0.5, -26)
     }
@@ -899,7 +899,7 @@ local Players = game:GetService("Players")
 local PlayerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
 
 local CreditsGui = Instance.new("ScreenGui")
-CreditsGui.Name = "CatHubCredits"
+CreditsGui.Name = "StormHubCredits"
 CreditsGui.ResetOnSpawn = false
 CreditsGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 CreditsGui.Parent = PlayerGui
@@ -937,7 +937,7 @@ local Icon1 = Instance.new("ImageLabel")
 Icon1.Name = "Icon1"
 Icon1.Size = UDim2.new(1, 0, 1, 0)
 Icon1.BackgroundTransparency = 1
-Icon1.Image = "rbxassetid://138770682187300"
+Icon1.Image = "rbxassetid://101927546713008"
 Icon1.ScaleType = Enum.ScaleType.Fit
 Icon1.Parent = IconContainer
 
@@ -956,7 +956,7 @@ CreditsText.AnchorPoint = Vector2.new(0.5, 0.5)
 CreditsText.Position = UDim2.new(0.5, 15, 0.5, 0)
 CreditsText.Size = UDim2.new(1, -60, 1, 0)
 CreditsText.BackgroundTransparency = 1
-CreditsText.Text = "By zerozxk"
+CreditsText.Text = "By zerozxk continued by Storm "
 CreditsText.TextColor3 = Color3.fromRGB(255, 255, 255)
 CreditsText.TextSize = 18
 CreditsText.Font = Enum.Font.GothamBold
@@ -4491,7 +4491,7 @@ local DiscordTab = Window:CreateTab({
 })
 
 Window:AddInviteDiscord(DiscordTab, {
-    Name = "Cat Hub",
+    Name = "Zenith hub + stormx7rlk",
     Link = "https://discord.gg/SenZqyaRvr",
     Icon = "rbxassetid://138770682187300",
     ButtonText = "Join"
@@ -6298,7 +6298,7 @@ Window:AddToggle(FruitRaidTab, {
 
 local ShopTab = Window:CreateTab({
     Name = "Shop Tab",
-    Icon = {"rbxassetid://78513040135508"}
+    Icon = {"rbxassetid://101927546713008"}
 })
 
 Window:AddSection(ShopTab, {
@@ -6478,6 +6478,7 @@ Window:AddToggle(ShopTab, {
 Window:Notify({
     Title = "Script Loaded",
     Body = "Cat Hub loaded successfully!",
-    Icon = {"rbxassetid://92677765459164"},
+    Icon = {"rbxassetid://101927546713008"},
     Duration = 5
+
 })
