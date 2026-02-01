@@ -956,7 +956,7 @@ CreditsText.AnchorPoint = Vector2.new(0.5, 0.5)
 CreditsText.Position = UDim2.new(0.5, 15, 0.5, 0)
 CreditsText.Size = UDim2.new(1, -60, 1, 0)
 CreditsText.BackgroundTransparency = 1
-CreditsText.Text = "By zerozxk continued by Storm "
+CreditsText.Text = "by Storm "
 CreditsText.TextColor3 = Color3.fromRGB(255, 255, 255)
 CreditsText.TextSize = 18
 CreditsText.Font = Enum.Font.GothamBold
@@ -6482,3 +6482,4 @@ Window:Notify({
     Duration = 5
 
 })
+
