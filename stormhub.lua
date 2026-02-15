@@ -881,20 +881,23 @@ end)
 
 LoadConfig()
 
-local ModernUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Rizeniii/diamond/refs/heads/main/zero/main"))()
+local CatLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/realcath/lab/refs/heads/main/libary/catliby"))()
 
-local Window = ModernUI.new({
-    Title = "Zenith hub + stormx7rlk",
-    SubTitle = "Blox Fruits",
-    Icon = {"rbxassetid://101927546713008", "rbxassetid://101927546713008"},
-    IconFPS = 0.1,
-    FloatingButton = {
-        Icon = {"rbxassetid://101927546713008", "rbxassetid://101927546713008"},
-        Size = 52,
-        Position = UDim2.new(1, -70, 0.5, -26)
-    }
+local window = CatLib:CreateWindow({
+	Title = "Kryzen Hub",
+	Subtitle = "By cavalão",
+	Icon = "rbxassetid://89029993998703",
+	Size = UDim2.new(0, 500, 0, 300),
+	Theme = "", -- Blue, Red, Yellow, Green, Purple, Orange, Brown, Grey, SpecialCat
+	ColorfulLetters = true, -- Use "true" to enable text color changes according to the theme.
+	FloatingButton = {
+		Enabled = true,
+		Icon = "rbxassetid://89029993998703",
+		Size = UDim2.new(0, 60, 0, 60),
+		Position = UDim2.new(0, 20, 0, 100),
+		Shape = "square"
+	}
 })
-
 local Players = game:GetService("Players")
 local PlayerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
 
@@ -6482,4 +6485,5 @@ Window:Notify({
     Duration = 5
 
 })
+
 
