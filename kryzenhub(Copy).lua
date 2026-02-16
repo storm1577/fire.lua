@@ -30,34 +30,33 @@ window:Notify({
 	Text = "cavalo loaded successfully",
 	Duration = 5
 })
--- ===============================
--- AUTO FARM OSSOS (AIR FARM)
--- ===============================
+-- AUTO FARM BONES AIR
 
 local Players = game:GetService("Players")
+local VirtualUser = game:GetService("VirtualUser")
 local player = Players.LocalPlayer
 
 local farming = false
-local height = 25 -- altura acima do inimigo
+local height = 30
 
--- pegar HRP
 local function getHRP()
 	local char = player.Character or player.CharacterAdded:Wait()
 	return char:WaitForChild("HumanoidRootPart")
 end
 
--- pegar inimigos
 local function getEnemies()
-	local list = {}
-	for _, v in pairs(workspace.Enemies:GetChildren()) do
+	local enemies = {}
+	local folder = workspace:FindFirstChild("Enemies")
+	if not folder then return enemies end
+	
+	for _, v in pairs(folder:GetChildren()) do
 		if v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
-			table.insert(list, v)
+			table.insert(enemies, v)
 		end
 	end
-	return list
+	return enemies
 end
 
--- TOGGLE
 tab:CreateToggle({
 	Name = "Auto Farm Bones (Air)",
 	CurrentValue = false,
@@ -74,20 +73,18 @@ tab:CreateToggle({
 							if not farming then break end
 							
 							local eHRP = enemy:FindFirstChild("HumanoidRootPart")
-							if eHRP and enemy.Humanoid.Health > 0 then
+							if eHRP then
+								-- ficar em cima
+								hrp.CFrame = eHRP.CFrame + Vector3.new(0, height, 0)
 								
-								-- ficar em cima do inimigo
-								hrp.CFrame = eHRP.CFrame * CFrame.new(0, height, 0)
-								
-								-- puxar inimigo levemente pra cima (anti hit)
-								eHRP.CFrame = hrp.CFrame * CFrame.new(0, -5, 0)
+								-- puxar inimigo pra baixo
+								eHRP.CFrame = hrp.CFrame - Vector3.new(0, 5, 0)
 								
 								-- atacar
-								local vu = game:GetService("VirtualUser")
-								vu:CaptureController()
-								vu:ClickButton1(Vector2.new())
+								VirtualUser:CaptureController()
+								VirtualUser:ClickButton1(Vector2.new())
 								
-								task.wait(0.15)
+								task.wait(0.12)
 							end
 						end
 					end)
