@@ -311,10 +311,9 @@ teleportTab:AddButton({
 -- ===============================
 
 local configsTab = window:CreateTab({
-	Name = "configs",
+	Title = "Configs",
 	Icon = "rbxassetid://127942036755810"
 })
-
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local UIS = game:GetService("UserInputService")
