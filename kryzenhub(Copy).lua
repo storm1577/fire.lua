@@ -39,7 +39,7 @@ local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 
 -- ÍCONE DA ABA
-local ICON = "rbxassetid://8678122759"
+local ICON = "rbxassetid://104148559102116"
 
 -- DESTINOS SEA 3
 local locais = {
