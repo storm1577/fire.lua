@@ -20,7 +20,7 @@ local tab = window:CreateTab({
 	Name = "Main",
 	Title = "Main",
 	Subtitle = "Main features",
-	Icon = "rbxassetid://89029993998703"
+	Icon = "rbxassetid://92602807830976"
 })
 
 tab:AddSection("start")
