@@ -1,3 +1,4 @@
+print("SCRIPT INICIOU")
 local CatLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/realcath/lab/refs/heads/main/libary/catliby"))()
 
 local window = CatLib:CreateWindow({
