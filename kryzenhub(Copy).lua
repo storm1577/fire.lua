@@ -368,24 +368,7 @@ teleportTab:AddButton({
 			noclip(false)
 		end
 	end
-})
-
-		if v then
-			for _, obj in ipairs(workspace:GetDescendants()) do
-				if obj:IsA("BasePart") then
-					obj.Material = Enum.Material.Plastic
-				elseif obj:IsA("Decal") or obj:IsA("Texture") then
-					obj:Destroy()
-				end
-			end
-			
-			settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
-			game.Lighting.GlobalShadows = false
-		end
-		Save()
-	end
-})
-
+})		
 --========================
 -- FAST AUTO CLICK (estilo fast attack)
 --========================
