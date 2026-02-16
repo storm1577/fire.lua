@@ -355,7 +355,7 @@ local function Load()
 end
 
 Load()
-
+print("CHEGOU NOS TOGGLES")
 -- ===============================
 -- PEGAR HUMANOID
 -- ===============================
