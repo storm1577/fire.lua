@@ -15,7 +15,60 @@ local window = CatLib:CreateWindow({
 		Shape = "square"
 	}
 })
+-- =========================
+-- AUTO CLICK INTEGRADO (SEMPRE ATIVO)
+-- =========================
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local player = Players.LocalPlayer
+
+-- Net system (novo)
+local Net = ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Net")
+local RegisterAttack = Net:WaitForChild("RE/RegisterAttack")
+local RegisterHit = Net:WaitForChild("RE/RegisterHit")
+
+local function getEnemies()
+	local char = player.Character
+	if not char or not char:FindFirstChild("HumanoidRootPart") then return {} end
+
+	local enemies = {}
+	local pos = char.HumanoidRootPart.Position
+
+	for _, enemy in pairs(workspace:WaitForChild("Enemies"):GetChildren()) do
+		local hum = enemy:FindFirstChild("Humanoid")
+		local hrp = enemy:FindFirstChild("HumanoidRootPart")
+
+		if hum and hrp and hum.Health > 0 then
+			if (hrp.Position - pos).Magnitude <= 65 then
+				table.insert(enemies, enemy)
+			end
+		end
+	end
+	return enemies
+end
+
+local function attackEnemy(enemy)
+	local target = enemy:FindFirstChild("HumanoidRootPart")
+	if not target then return end
+
+	pcall(function()
+		RegisterAttack:FireServer(0)
+		RegisterHit:FireServer(target, {{enemy, target}})
+	end)
+end
+
+-- LOOP AUTO CLICK (sempre ligado)
+task.spawn(function()
+	while task.wait(0.07) do
+		local char = player.Character
+		if char and char:FindFirstChildOfClass("Tool") then
+			for _, mob in pairs(getEnemies()) do
+				attackEnemy(mob)
+			end
+		end
+	end
+end)
 local tab = window:CreateTab({
 	Name = "Main",
 	Title = "Main",
@@ -304,76 +357,3 @@ SeaTab:AddToggle({
 		end
 	end
 })
---========================
--- SETTINGS TAB
---========================
-local settingsTab = window:CreateTab({
-	Name = "Settings",
-	Title = "Settings",
-	Subtitle = "Player Options",
-	Icon = "rbxassetid://129565023132728"
-})
-
-settingsTab:AddSection("Combat")
-settingsTab:AddToggle({
-	Name = "Real Auto Click",
-	Default = false,
-	Callback = function(state)
-		AutoClickEnabled = state
-	end
-})
--- =========================
--- AUTO CLICK CORE (REAL)
--- =========================
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-local player = Players.LocalPlayer
-local RegisterAttack = ReplicatedStorage.Modules.Net:WaitForChild("RE/RegisterAttack")
-local RegisterHit = ReplicatedStorage.Modules.Net:WaitForChild("RE/RegisterHit")
-
-local AutoClickEnabled = false
-
-local function getEnemies()
-    local char = player.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then return {} end
-
-    local enemies = {}
-    local pos = char.HumanoidRootPart.Position
-
-    for _, enemy in pairs(workspace.Enemies:GetChildren()) do
-        local hum = enemy:FindFirstChild("Humanoid")
-        local hrp = enemy:FindFirstChild("HumanoidRootPart")
-
-        if hum and hrp and hum.Health > 0 then
-            if (hrp.Position - pos).Magnitude <= 65 then
-                table.insert(enemies, enemy)
-            end
-        end
-    end
-    return enemies
-end
-
-local function attackEnemy(enemy)
-    local target = enemy:FindFirstChild("HumanoidRootPart")
-    if not target then return end
-
-    pcall(function()
-        RegisterAttack:FireServer(0)
-        RegisterHit:FireServer(target, {{enemy, target}})
-    end)
-end
-
-task.spawn(function()
-    while task.wait(0.07) do
-        if AutoClickEnabled then
-            local char = player.Character
-            if char and char:FindFirstChildOfClass("Tool") then
-                for _, mob in pairs(getEnemies()) do
-                    attackEnemy(mob)
-                end
-            end
-        end
-    end
-end)
-
