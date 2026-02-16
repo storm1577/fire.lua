@@ -21,8 +21,6 @@ local window = CatLib:CreateWindow({
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local RunService = game:GetService("RunService")
-
 -- Net system (novo)
 local Net = ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Net")
 local RegisterAttack = Net:WaitForChild("RE/RegisterAttack")
