@@ -30,6 +30,73 @@ window:Notify({
 	Text = "cavalo loaded successfully",
 	Duration = 5
 })
+-- ===============================
+-- AUTO FARM OSSOS (AIR FARM)
+-- ===============================
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+local farming = false
+local height = 25 -- altura acima do inimigo
+
+-- pegar HRP
+local function getHRP()
+	local char = player.Character or player.CharacterAdded:Wait()
+	return char:WaitForChild("HumanoidRootPart")
+end
+
+-- pegar inimigos
+local function getEnemies()
+	local list = {}
+	for _, v in pairs(workspace.Enemies:GetChildren()) do
+		if v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+			table.insert(list, v)
+		end
+	end
+	return list
+end
+
+-- TOGGLE
+tab:CreateToggle({
+	Name = "Auto Farm Bones (Air)",
+	CurrentValue = false,
+	Callback = function(v)
+		farming = v
+		
+		if v then
+			task.spawn(function()
+				while farming do
+					pcall(function()
+						local hrp = getHRP()
+						
+						for _, enemy in pairs(getEnemies()) do
+							if not farming then break end
+							
+							local eHRP = enemy:FindFirstChild("HumanoidRootPart")
+							if eHRP and enemy.Humanoid.Health > 0 then
+								
+								-- ficar em cima do inimigo
+								hrp.CFrame = eHRP.CFrame * CFrame.new(0, height, 0)
+								
+								-- puxar inimigo levemente pra cima (anti hit)
+								eHRP.CFrame = hrp.CFrame * CFrame.new(0, -5, 0)
+								
+								-- atacar
+								local vu = game:GetService("VirtualUser")
+								vu:CaptureController()
+								vu:ClickButton1(Vector2.new())
+								
+								task.wait(0.15)
+							end
+						end
+					end)
+					task.wait()
+				end
+			end)
+		end
+	end
+})
 --========================
 -- SEA EVENTOS TAB (CATLIB)
 --========================
