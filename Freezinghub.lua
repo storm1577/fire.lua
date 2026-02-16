@@ -881,7 +881,19 @@ end)
 
 LoadConfig()
 
+local ModernUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Rizeniii/diamond/refs/heads/main/zero/main"))()
 
+local Window = ModernUI.new({
+    Title = "Cat Hub",
+    SubTitle = "Blox Fruits",
+    Icon = {"rbxassetid://138770682187300", "rbxassetid://110961158970233"},
+    IconFPS = 0.1,
+    FloatingButton = {
+        Icon = {"rbxassetid://138770682187300", "rbxassetid://110961158970233"},
+        Size = 52,
+        Position = UDim2.new(1, -70, 0.5, -26)
+    }
+})
 
 local Players = game:GetService("Players")
 local PlayerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
@@ -893,26 +905,7 @@ CreditsGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 CreditsGui.Parent = PlayerGui
 
 local CreditsFrame = Instance.new("Frame")
-CreditsFrame.Name = "Credlocal CatLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/realcath/lab/refs/heads/main/libary/catliby"))()
-
-local CatLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/realcath/lab/refs/heads/main/libary/catliby"))()
-
-local window = CatLib:CreateWindow({
-    Title = "frozen hub",
-    Subtitle = "u.i By zerozxk",
-    Icon = "rbxassetid://121339025686432",
-    Size = UDim2.new(0, 500, 0, 300),
-    Theme = "Stormx",
-    ColorfulLetters = true,
-    FloatingButton = {
-        Enabled = true,
-        Icon = "rbxassetid://121339025686432",
-        Size = UDim2.new(0, 60, 0, 60),
-        Position = UDim2.new(0, 20, 0, 100),
-        Shape = "square"
-    }
-})
-itsFrame"
+CreditsFrame.Name = "CreditsFrame"
 CreditsFrame.AnchorPoint = Vector2.new(0.5, 0)
 CreditsFrame.Position = UDim2.new(0.5, 0, 0.01, 0)
 CreditsFrame.Size = UDim2.new(0, 200, 0, 45)
@@ -6472,5 +6465,4 @@ Window:Notify({
     Body = "Cat Hub loaded successfully!",
     Icon = {"rbxassetid://92677765459164"},
     Duration = 5
-
 })
