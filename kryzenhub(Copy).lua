@@ -31,6 +31,170 @@ window:Notify({
 	Duration = 5
 })
 --========================
+-- SEA EVENTOS TAB (CATLIB)
+--========================
+
+local SeaTab = window:CreateTab({
+	Name = "Sea Eventos",
+	Title = "Sea Eventos",
+	Subtitle = "Auto Boat",
+	Icon = "rbxassetid://119720690487986"
+})
+
+SeaTab:AddSection("Auto Boat")
+
+-- Zonas
+local SeaZones = {
+	["Mar 1"] = CFrame.new(-21998, 0, -682),
+	["Mar 2"] = CFrame.new(-26647, 2, -811),
+	["Mar 3"] = CFrame.new(-30740, 6, -2116),
+	["Mar 4"] = CFrame.new(-33642, 0, -2506),
+	["Mar 5"] = CFrame.new(-38527, 0, -2177),
+	["Mar 6"] = CFrame.new(-43761, 6, -1364),
+}
+
+local speed = 120
+local hoverHeight = 2
+local currentMove
+local selectedZone = "Mar 1"
+
+-- Funções barco
+local function getBoat()
+	local char = player.Character
+	if not char then return end
+	for _, v in pairs(workspace:GetDescendants()) do
+		if v:IsA("VehicleSeat") and v.Occupant and v.Occupant.Parent == char then
+			return v.Parent
+		end
+	end
+end
+
+local function sitOnBoat()
+	local char = player.Character
+	if not char then return end
+	local hrp = char:FindFirstChild("HumanoidRootPart")
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	if not hrp or not hum then return end
+
+	for _, v in pairs(workspace:GetDescendants()) do
+		if v:IsA("VehicleSeat") and (v.Position - hrp.Position).Magnitude < 60 then
+			hrp.CFrame = v.CFrame + Vector3.new(0,2,0)
+			task.wait(0.2)
+			v:Sit(hum)
+			task.wait(0.5)
+			return v.Parent
+		end
+	end
+end
+
+local function ensureBoat()
+	return getBoat() or sitOnBoat()
+end
+
+local function setNoclip(boat, state)
+	for _, part in pairs(boat:GetDescendants()) do
+		if part:IsA("BasePart") then
+			part.CanCollide = not state
+		end
+	end
+end
+
+local savedY
+local function stopBoat(primary, boat)
+	if currentMove then currentMove:Disconnect() end
+	if primary then
+		primary.CFrame = CFrame.new(primary.Position.X, savedY or primary.Position.Y, primary.Position.Z)
+	end
+	if boat then
+		setNoclip(boat, false)
+	end
+end
+
+local function startBoat()
+	local zoneCFrame = SeaZones[selectedZone]
+	if not zoneCFrame then return end
+
+	local boat = ensureBoat()
+	if not boat then
+		warn("Barco não encontrado")
+		return
+	end
+
+	if not boat.PrimaryPart then
+		boat.PrimaryPart = boat:FindFirstChildWhichIsA("BasePart")
+	end
+
+	local primary = boat.PrimaryPart
+	savedY = primary.Position.Y
+	setNoclip(boat, true)
+
+	pcall(function()
+		primary:SetNetworkOwner(player)
+	end)
+
+	if currentMove then currentMove:Disconnect() end
+
+	currentMove = RunService.Heartbeat:Connect(function(dt)
+		if not primary or not primary.Parent then
+			stopBoat(primary, boat)
+			return
+		end
+
+		local pos = primary.Position
+		local target = Vector3.new(zoneCFrame.X, savedY + hoverHeight, zoneCFrame.Z)
+		local dir = target - pos
+
+		if dir.Magnitude < 5 then
+			stopBoat(primary, boat)
+			return
+		end
+
+		local move = dir.Unit * speed * dt
+		primary.CFrame = CFrame.new(pos + move, target)
+	end)
+end
+
+-- Dropdown zonas
+local nomes = {}
+for n in pairs(SeaZones) do table.insert(nomes, n) end
+
+SeaTab:AddDropdown({
+	Name = "Zona",
+	Options = nomes,
+	Default = "Mar 1",
+	Callback = function(opt)
+		selectedZone = opt
+	end
+})
+
+-- Slider velocidade
+SeaTab:AddSlider({
+	Name = "Velocidade",
+	Min = 20,
+	Max = 300,
+	Default = 120,
+	Callback = function(val)
+		speed = val
+	end
+})
+
+-- Toggle autopilot
+SeaTab:AddToggle({
+	Name = "Auto Boat",
+	Default = false,
+	Callback = function(state)
+		if state then
+			startBoat()
+		else
+			local boat = ensureBoat()
+			if boat and boat.PrimaryPart then
+				stopBoat(boat.PrimaryPart, boat)
+			end
+		end
+	end
+})
+
+--========================
 -- TELEPORT TAB (COM TRAVEL)
 --=d=======================
 
@@ -203,166 +367,3 @@ end)
 player.Idled:Connect(function()
     VirtualUser:CaptureController()
 end)
---========================
--- SEA EVENTOS TAB (CATLIB)
---========================
-
-local SeaTab = window:CreateTab({
-	Name = "Sea Eventos",
-	Title = "Sea Eventos",
-	Subtitle = "Auto Boat",
-	Icon = "rbxassetid://119720690487986"
-})
-
-SeaTab:AddSection("Auto Boat")
-
--- Zonas
-local SeaZones = {
-	["Mar 1"] = CFrame.new(-21998, 0, -682),
-	["Mar 2"] = CFrame.new(-26647, 2, -811),
-	["Mar 3"] = CFrame.new(-30740, 6, -2116),
-	["Mar 4"] = CFrame.new(-33642, 0, -2506),
-	["Mar 5"] = CFrame.new(-38527, 0, -2177),
-	["Mar 6"] = CFrame.new(-43761, 6, -1364),
-}
-
-local speed = 120
-local hoverHeight = 2
-local currentMove
-local selectedZone = "Mar 1"
-
--- Funções barco
-local function getBoat()
-	local char = player.Character
-	if not char then return end
-	for _, v in pairs(workspace:GetDescendants()) do
-		if v:IsA("VehicleSeat") and v.Occupant and v.Occupant.Parent == char then
-			return v.Parent
-		end
-	end
-end
-
-local function sitOnBoat()
-	local char = player.Character
-	if not char then return end
-	local hrp = char:FindFirstChild("HumanoidRootPart")
-	local hum = char:FindFirstChildOfClass("Humanoid")
-	if not hrp or not hum then return end
-
-	for _, v in pairs(workspace:GetDescendants()) do
-		if v:IsA("VehicleSeat") and (v.Position - hrp.Position).Magnitude < 60 then
-			hrp.CFrame = v.CFrame + Vector3.new(0,2,0)
-			task.wait(0.2)
-			v:Sit(hum)
-			task.wait(0.5)
-			return v.Parent
-		end
-	end
-end
-
-local function ensureBoat()
-	return getBoat() or sitOnBoat()
-end
-
-local function setNoclip(boat, state)
-	for _, part in pairs(boat:GetDescendants()) do
-		if part:IsA("BasePart") then
-			part.CanCollide = not state
-		end
-	end
-end
-
-local savedY
-local function stopBoat(primary, boat)
-	if currentMove then currentMove:Disconnect() end
-	if primary then
-		primary.CFrame = CFrame.new(primary.Position.X, savedY or primary.Position.Y, primary.Position.Z)
-	end
-	if boat then
-		setNoclip(boat, false)
-	end
-end
-
-local function startBoat()
-	local zoneCFrame = SeaZones[selectedZone]
-	if not zoneCFrame then return end
-
-	local boat = ensureBoat()
-	if not boat then
-		warn("Barco não encontrado")
-		return
-	end
-
-	if not boat.PrimaryPart then
-		boat.PrimaryPart = boat:FindFirstChildWhichIsA("BasePart")
-	end
-
-	local primary = boat.PrimaryPart
-	savedY = primary.Position.Y
-	setNoclip(boat, true)
-
-	pcall(function()
-		primary:SetNetworkOwner(player)
-	end)
-
-	if currentMove then currentMove:Disconnect() end
-
-	currentMove = RunService.Heartbeat:Connect(function(dt)
-		if not primary or not primary.Parent then
-			stopBoat(primary, boat)
-			return
-		end
-
-		local pos = primary.Position
-		local target = Vector3.new(zoneCFrame.X, savedY + hoverHeight, zoneCFrame.Z)
-		local dir = target - pos
-
-		if dir.Magnitude < 5 then
-			stopBoat(primary, boat)
-			return
-		end
-
-		local move = dir.Unit * speed * dt
-		primary.CFrame = CFrame.new(pos + move, target)
-	end)
-end
-
--- Dropdown zonas
-local nomes = {}
-for n in pairs(SeaZones) do table.insert(nomes, n) end
-
-SeaTab:AddDropdown({
-	Name = "Zona",
-	Options = nomes,
-	Default = "Mar 1",
-	Callback = function(opt)
-		selectedZone = opt
-	end
-})
-
--- Slider velocidade
-SeaTab:AddSlider({
-	Name = "Velocidade",
-	Min = 20,
-	Max = 300,
-	Default = 120,
-	Callback = function(val)
-		speed = val
-	end
-})
-
--- Toggle autopilot
-SeaTab:AddToggle({
-	Name = "Auto Boat",
-	Default = false,
-	Callback = function(state)
-		if state then
-			startBoat()
-		else
-			local boat = ensureBoat()
-			if boat and boat.PrimaryPart then
-				stopBoat(boat.PrimaryPart, boat)
-			end
-		end
-	end
-})
