@@ -305,6 +305,250 @@ teleportTab:AddButton({
 		end
 	end
 })
+--// ===============================
+-- CONFIGS AVANÇADAS
+-- ===============================
+
+local configsTab = window:CreateTab({
+	Name = "Configs",
+	Icon = "rbxassetid://127942036755810"
+})
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
+
+local humanoid
+local infJump = false
+local speedEnabled = false
+local jumpEnabled = false
+
+-- ===============================
+-- SISTEMA DE SAVE
+-- ===============================
+local Config = {
+	speed = 16,
+	jump = 50,
+	speedOn = false,
+	jumpOn = false,
+	infJump = false,
+	fpsBoost = false,
+	stretch = false,
+	noNotif = false,
+	mobile = false
+}
+
+local FILE_NAME = "kryzen_configs.json"
+
+local function Save()
+	if writefile then
+		writefile(FILE_NAME, game:GetService("HttpService"):JSONEncode(Config))
+	end
+end
+
+local function Load()
+	if readfile and isfile and isfile(FILE_NAME) then
+		Config = game:GetService("HttpService"):JSONDecode(readfile(FILE_NAME))
+	end
+end
+
+Load()
+
+-- ===============================
+-- PEGAR HUMANOID
+-- ===============================
+local function getHumanoid()
+	local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+	humanoid = char:WaitForChild("Humanoid")
+	
+	-- reaplicar configs
+	if Config.speedOn then humanoid.WalkSpeed = Config.speed end
+	if Config.jumpOn then humanoid.JumpPower = Config.jump end
+end
+
+getHumanoid()
+LocalPlayer.CharacterAdded:Connect(getHumanoid)
+
+-- ===============================
+-- VELOCIDADE
+-- ===============================
+configsTab:CreateToggle({
+	Name = "Alterar Velocidade",
+	CurrentValue = Config.speedOn,
+	Callback = function(v)
+		Config.speedOn = v
+		speedEnabled = v
+		if humanoid then
+			humanoid.WalkSpeed = v and Config.speed or 16
+		end
+		Save()
+	end
+})
+
+configsTab:CreateSlider({
+	Name = "Valor da Velocidade",
+	Range = {16, 200},
+	CurrentValue = Config.speed,
+	Callback = function(v)
+		Config.speed = v
+		if speedEnabled and humanoid then
+			humanoid.WalkSpeed = v
+		end
+		Save()
+	end
+})
+
+-- ===============================
+-- SUPER PULO
+-- ===============================
+configsTab:CreateToggle({
+	Name = "Super Pulo",
+	CurrentValue = Config.jumpOn,
+	Callback = function(v)
+		Config.jumpOn = v
+		jumpEnabled = v
+		if humanoid then
+			humanoid.JumpPower = v and Config.jump or 50
+		end
+		Save()
+	end
+})
+
+configsTab:CreateSlider({
+	Name = "Altura do Pulo",
+	Range = {50, 300},
+	CurrentValue = Config.jump,
+	Callback = function(v)
+		Config.jump = v
+		if jumpEnabled and humanoid then
+			humanoid.JumpPower = v
+		end
+		Save()
+	end
+})
+
+-- ===============================
+-- INFINITE JUMP
+-- ===============================
+configsTab:CreateToggle({
+	Name = "Infinite Jump",
+	CurrentValue = Config.infJump,
+	Callback = function(v)
+		Config.infJump = v
+		infJump = v
+		Save()
+	end
+})
+
+UIS.JumpRequest:Connect(function()
+	if infJump and humanoid then
+		humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+	end
+end)
+
+-- ===============================
+-- BOOST FPS
+-- ===============================
+configsTab:CreateToggle({
+	Name = "Boost FPS",
+	CurrentValue = Config.fpsBoost,
+	Callback = function(v)
+		Config.fpsBoost = v
+		if v then
+			for _, obj in ipairs(workspace:GetDescendants()) do
+				if obj:IsA("BasePart") then
+					obj.Material = Enum.Material.Plastic
+				elseif obj:IsA("Decal") or obj:IsA("Texture") then
+					obj:Destroy()
+				end
+			end
+			
+			settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+			game.Lighting.GlobalShadows = false
+		end
+		Save()
+	end
+})
+
+-- ===============================
+-- ESTICAR TELA
+-- ===============================
+configsTab:CreateToggle({
+	Name = "Esticar Tela",
+	CurrentValue = Config.stretch,
+	Callback = function(v)
+		Config.stretch = v
+		workspace.CurrentCamera.FieldOfView = v and 120 or 70
+		Save()
+	end
+})
+
+-- ===============================
+-- ANTI KICK
+-- ===============================
+configsTab:CreateToggle({
+	Name = "Anti Kick",
+	CurrentValue = true,
+	Callback = function(v)
+		if v then
+			local mt = getrawmetatable(game)
+			setreadonly(mt, false)
+			local old = mt.__namecall
+
+			mt.__namecall = newcclosure(function(self, ...)
+				local method = getnamecallmethod()
+				if method == "Kick" then
+					return
+				end
+				return old(self, ...)
+			end)
+		end
+	end
+})
+
+-- ===============================
+-- RESETAR TUDO
+-- ===============================
+configsTab:CreateButton({
+	Name = "Resetar Tudo",
+	Callback = function()
+		delfile(FILE_NAME)
+		game:GetService("TeleportService"):Teleport(game.PlaceId, LocalPlayer)
+	end
+})
+
+-- ===============================
+-- MODO MOBILE MELHORADO
+-- ===============================
+configsTab:CreateToggle({
+	Name = "Modo Mobile",
+	CurrentValue = Config.mobile,
+	Callback = function(v)
+		Config.mobile = v
+		if v then
+			settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+			UIS.TouchEnabled = true
+		end
+		Save()
+	end
+})
+
+-- ===============================
+-- DESATIVAR NOTIFICAÇÕES
+-- ===============================
+configsTab:CreateToggle({
+	Name = "Desativar Notificações",
+	CurrentValue = Config.noNotif,
+	Callback = function(v)
+		Config.noNotif = v
+		if v then
+			StarterGui:SetCore("SendNotification", function() end)
+		end
+		Save()
+	end
+})
 --========================
 -- FAST AUTO CLICK (estilo fast attack)
 --========================
