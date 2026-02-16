@@ -203,7 +203,6 @@ end)
 player.Idled:Connect(function()
     VirtualUser:CaptureController()
 end)
-
 --========================
 -- SEA EVENTOS TAB (CATLIB)
 --========================
