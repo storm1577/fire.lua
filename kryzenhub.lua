@@ -18,10 +18,10 @@ local window = CatLib:CreateWindow({
 -- =========================
 -- AUTO CLICK INTEGRADO (SEMPRE ATIVO)
 -- =========================
-local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local player = Players.LocalPlayer
+local RunService = game:GetService("RunService")
 
 -- Net system (novo)
 local Net = ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Net")
