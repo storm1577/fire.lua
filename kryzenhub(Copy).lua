@@ -305,12 +305,13 @@ teleportTab:AddButton({
 		end
 	end
 })
+
 --// ===============================
 -- CONFIGS AVANÇADAS
 -- ===============================
 
 local configsTab = window:CreateTab({
-	Name = "Configs",
+	Name = "configs",
 	Icon = "rbxassetid://127942036755810"
 })
 
