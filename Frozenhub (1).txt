@@ -1,0 +1,163 @@
+local CatLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/realcath/lab/refs/heads/main/libary/catliby"))()
+
+local window = CatLib:CreateWindow({
+    Title = "kryzen hub",
+    Subtitle = "u.i By zerozxk",
+    Icon = "rbxassetid://121339025686432",
+    Size = UDim2.new(0, 500, 0, 300),
+    Theme = "Stormx",
+    ColorfulLetters = true,
+    FloatingButton = {
+        Enabled = true,
+        Icon = "rbxassetid://121339025686432",
+        Size = UDim2.new(0, 60, 0, 60),
+        Position = UDim2.new(0, 20, 0, 100),
+        Shape = "square"
+    }
+})
+-- =========================
+-- FAST ATTACK PASSIVO
+-- =========================
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Player = Players.LocalPlayer
+
+local CurrentTargetIndex = 1
+local LastAttackTime = 0
+local AttackDelay = 0.12 -- mais rápido que o padrão
+
+local CombatFrameworkLoaded = false
+local CombatFrameworkR, RigLib
+
+-- carregar combat framework
+local function LoadCombatFramework()
+    pcall(function()
+        local CF = Player:WaitForChild("PlayerScripts"):WaitForChild("CombatFramework")
+        local module = require(CF)
+        CombatFrameworkR = debug.getupvalues(module)[2]
+        RigLib = require(ReplicatedStorage.CombatFramework.RigLib)
+        CombatFrameworkLoaded = true
+    end)
+end
+task.spawn(LoadCombatFramework)
+
+-- pegar inimigos próximos
+local function GetNearbyEnemies()
+    local char = Player.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return {} end
+
+    local pos = char.HumanoidRootPart.Position
+    local list = {}
+
+    local enemiesFolder = workspace:FindFirstChild("Enemies")
+    if not enemiesFolder then return list end
+
+    for _, mob in pairs(enemiesFolder:GetChildren()) do
+        local hum = mob:FindFirstChild("Humanoid")
+        local hrp = mob:FindFirstChild("HumanoidRootPart")
+        if hum and hrp and hum.Health > 0 then
+            if (hrp.Position - pos).Magnitude <= 65 then -- range maior
+                table.insert(list, mob)
+            end
+        end
+    end
+    return list
+end
+
+-- ataque normal melhorado
+local function AttackRotation()
+    local enemies = GetNearbyEnemies()
+    if #enemies == 0 then
+        CurrentTargetIndex = 1
+        return
+    end
+
+    if CurrentTargetIndex > #enemies then
+        CurrentTargetIndex = 1
+    end
+
+    local enemy = enemies[CurrentTargetIndex]
+    CurrentTargetIndex += 1
+
+    local target = enemy:FindFirstChild("HumanoidRootPart") or enemy:FindFirstChild("UpperTorso")
+    if target then
+        pcall(function()
+            ReplicatedStorage.Modules.Net["RE/RegisterAttack"]:FireServer(0)
+            ReplicatedStorage.Modules.Net["RE/RegisterHit"]:FireServer(target, {{enemy, target}})
+        end)
+    end
+end
+
+-- fast attack real (premium style)
+local function FastAttackPremium()
+    if not CombatFrameworkLoaded then return end
+
+    local char = Player.Character
+    if not char then return end
+
+    local AC = CombatFrameworkR and CombatFrameworkR.activeController
+    if not AC or not AC.equipped then return end
+
+    local enemies = GetNearbyEnemies()
+    if #enemies == 0 then return end
+
+    pcall(function()
+        for _, enemy in pairs(enemies) do
+            local hrp = enemy:FindFirstChild("HumanoidRootPart") or enemy:FindFirstChild("UpperTorso")
+            if hrp and RigLib and RigLib.wrapAttackAnimationAsync then
+                local u1 = debug.getupvalue(RigLib.wrapAttackAnimationAsync, 2)
+                local u2 = debug.getupvalue(u1, 4)
+                local u3 = debug.getupvalue(u2, 6)
+                local u4 = debug.getupvalue(u3, 1)
+                local u5 = u4[1]
+                local u6 = u4[2]
+                pcall(function()
+                    u5({hrp}, 3, "", u6)
+                end)
+            end
+        end
+    end)
+end
+
+-- loop principal
+task.spawn(function()
+    while task.wait(0.03) do -- mais rápido que hubs comuns
+        local now = tick()
+        if now - LastAttackTime >= AttackDelay then
+            LastAttackTime = now
+
+            -- usa os dois juntos
+            FastAttackPremium()
+            AttackRotation()
+        end
+    end
+end)
+local MainTab = window:CreateTab({
+    Name = "Main",
+    Title = "Main Features",
+    Subtitle = "Tudo que você precisa",
+    Icon = "rbxassetid://92602807830976" -- coloque o ID da imagem que você quer
+})
+
+local OtherItemsTab = window:CreateTab({
+    Name = "Other Items",
+    Title = "Itens Extras",
+    Subtitle = "Mais opções",
+    Icon = "rbxassetid://94121909606356"
+})
+
+local SeaEventsTab = window:CreateTab({
+    Name = "Sea Events",
+    Title = "Eventos do Mar",
+    Subtitle = "Teleporte e eventos",
+    Icon = "rbxassetid://119720690487986"
+})
+
+local VisualTab = window:CreateTab({
+    Name = "Visual",
+    Title = "Visual",
+    Subtitle = "Modificações visuais",
+    Icon = "rbxassetid://130144488602871"
+})
+
