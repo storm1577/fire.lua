@@ -19,7 +19,7 @@ local MainTab = window:CreateTab({
     Name = "Main",
     Title = "Main Features",
     Subtitle = "Tudo que você precisa",
-    Icon = "rbxassetid://1234567890" -- coloque o ID da imagem que você quer
+    Icon = "rbxassetid://92602807830976" -- coloque o ID da imagem que você quer
 })
 
 local OtherItemsTab = window:CreateTab({
@@ -33,7 +33,7 @@ local SeaEventsTab = window:CreateTab({
     Name = "Sea Events",
     Title = "Eventos do Mar",
     Subtitle = "Teleporte e eventos",
-    Icon = "rbxassetid://3456789012"
+    Icon = "rbxassetid://119720690487986"
 })
 
 local VisualTab = window:CreateTab({
