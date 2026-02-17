@@ -1,0 +1,507 @@
+local CatLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/realcath/lab/refs/heads/main/libary/catliby"))()
+
+local window = CatLib:CreateWindow({
+    Title = "kryzen hub",
+    Subtitle = "u.i By zerozxk",
+    Icon = "rbxassetid://121339025686432",
+    Size = UDim2.new(0, 500, 0, 300),
+    Theme = "Stormx",
+    ColorfulLetters = true,
+    FloatingButton = {
+        Enabled = true,
+        Icon = "rbxassetid://121339025686432",
+        Size = UDim2.new(0, 60, 0, 60),
+        Position = UDim2.new(0, 20, 0, 100),
+        Shape = "square"
+    }
+})
+-- =========================
+-- FAST ATTACK PASSIVO
+-- =========================
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Player = Players.LocalPlayer
+
+local CurrentTargetIndex = 1
+local LastAttackTime = 0
+local AttackDelay = 0.12 -- mais rápido que o padrão
+
+local CombatFrameworkLoaded = false
+local CombatFrameworkR, RigLib
+
+-- carregar combat framework
+local function LoadCombatFramework()
+    pcall(function()
+        local CF = Player:WaitForChild("PlayerScripts"):WaitForChild("CombatFramework")
+        local module = require(CF)
+        CombatFrameworkR = debug.getupvalues(module)[2]
+        RigLib = require(ReplicatedStorage.CombatFramework.RigLib)
+        CombatFrameworkLoaded = true
+    end)
+end
+task.spawn(LoadCombatFramework)
+
+-- pegar inimigos próximos
+local function GetNearbyEnemies()
+    local char = Player.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return {} end
+
+    local pos = char.HumanoidRootPart.Position
+    local list = {}
+
+    local enemiesFolder = workspace:FindFirstChild("Enemies")
+    if not enemiesFolder then return list end
+
+    for _, mob in pairs(enemiesFolder:GetChildren()) do
+        local hum = mob:FindFirstChild("Humanoid")
+        local hrp = mob:FindFirstChild("HumanoidRootPart")
+        if hum and hrp and hum.Health > 0 then
+            if (hrp.Position - pos).Magnitude <= 65 then -- range maior
+                table.insert(list, mob)
+            end
+        end
+    end
+    return list
+end
+
+-- ataque normal melhorado
+local function AttackRotation()
+    local enemies = GetNearbyEnemies()
+    if #enemies == 0 then
+        CurrentTargetIndex = 1
+        return
+    end
+
+    if CurrentTargetIndex > #enemies then
+        CurrentTargetIndex = 1
+    end
+
+    local enemy = enemies[CurrentTargetIndex]
+    CurrentTargetIndex += 1
+
+    local target = enemy:FindFirstChild("HumanoidRootPart") or enemy:FindFirstChild("UpperTorso")
+    if target then
+        pcall(function()
+            ReplicatedStorage.Modules.Net["RE/RegisterAttack"]:FireServer(0)
+            ReplicatedStorage.Modules.Net["RE/RegisterHit"]:FireServer(target, {{enemy, target}})
+        end)
+    end
+end
+
+-- fast attack real (premium style)
+local function FastAttackPremium()
+    if not CombatFrameworkLoaded then return end
+
+    local char = Player.Character
+    if not char then return end
+
+    local AC = CombatFrameworkR and CombatFrameworkR.activeController
+    if not AC or not AC.equipped then return end
+
+    local enemies = GetNearbyEnemies()
+    if #enemies == 0 then return end
+
+    pcall(function()
+        for _, enemy in pairs(enemies) do
+            local hrp = enemy:FindFirstChild("HumanoidRootPart") or enemy:FindFirstChild("UpperTorso")
+            if hrp and RigLib and RigLib.wrapAttackAnimationAsync then
+                local u1 = debug.getupvalue(RigLib.wrapAttackAnimationAsync, 2)
+                local u2 = debug.getupvalue(u1, 4)
+                local u3 = debug.getupvalue(u2, 6)
+                local u4 = debug.getupvalue(u3, 1)
+                local u5 = u4[1]
+                local u6 = u4[2]
+                pcall(function()
+                    u5({hrp}, 3, "", u6)
+                end)
+            end
+        end
+    end)
+end
+
+-- loop principal
+task.spawn(function()
+    while task.wait(0.03) do -- mais rápido que hubs comuns
+        local now = tick()
+        if now - LastAttackTime >= AttackDelay then
+            LastAttackTime = now
+
+            -- usa os dois juntos
+            FastAttackPremium()
+            AttackRotation()
+        end
+    end
+end)
+local MainTab = window:CreateTab({
+    Name = "Main",
+    Title = "Main Features",
+    Subtitle = "Tudo que você precisa",
+    Icon = "rbxassetid://92602807830976" -- coloque seu ícone
+})
+
+-- Variáveis de controle
+local FarmEnabled = false
+local FarmMode = "Ossos" -- padrão
+
+-- Toggle (ligar/desligar farm)
+MainTab:AddToggle({
+    Name = "Ativar Farm",
+    StartingState = false,
+    Callback = function(state)
+        FarmEnabled = state
+        print("Farm ativado:", state)
+    end
+})
+
+-- Dropdown para escolher o tipo de farm
+MainTab:AddDropdown({
+    Name = "Modo de Farm",
+    Options = {"Farm Ossos", "Farm Nearest"},
+    Callback = function(option)
+        if option == "Farm Ossos" then
+            FarmMode = "Ossos"
+        elseif option == "Farm Nearest" then
+            FarmMode = "Nearest"
+        end
+        print("Modo selecionado:", FarmMode)
+    end
+})
+
+-- Loop principal do farm
+task.spawn(function()
+    while task.wait(0.2) do
+        if not FarmEnabled then continue end -- se desligado, pula
+
+        local player = game.Players.LocalPlayer
+        local char = player.Character
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        if not root then continue end
+
+        -- FARM OSSOS (NPCs do Castelo Assombrado)
+        if FarmMode == "Ossos" then
+            for _, mob in pairs(workspace.Enemies:GetChildren()) do
+                local hrp = mob:FindFirstChild("HumanoidRootPart")
+                local hum = mob:FindFirstChild("Humanoid")
+                if hrp and hum and hum.Health > 0 then
+                    if mob.Name:lower():find("possessed") or mob.Name:lower():find("reaper") then
+                        -- Teleporta o player acima do NPC
+                        root.CFrame = hrp.CFrame * CFrame.new(0, 10, 0)
+                        break -- vai para o primeiro NPC encontrado
+                    end
+                end
+            end
+        end
+
+        -- FARM NEAREST (NPC mais próximo)
+        if FarmMode == "Nearest" then
+            local closest = nil
+            local dist = math.huge
+
+            for _, mob in pairs(workspace.Enemies:GetChildren()) do
+                local hrp = mob:FindFirstChild("HumanoidRootPart")
+                local hum = mob:FindFirstChild("Humanoid")
+                if hrp and hum and hum.Health > 0 then
+                    local magnitude = (root.Position - hrp.Position).Magnitude
+                    if magnitude < dist then
+                        dist = magnitude
+                        closest = hrp
+                    end
+                end
+            end
+
+            if closest then
+                root.CFrame = closest.CFrame * CFrame.new(0, 10, 0)
+            end
+        end
+    end
+end)
+--========================
+-- TELEPORT TAB (COM TRAVEL)
+--=d=======================
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+
+-- ÍCONE DA ABA
+local ICON = "rbxassetid://104148559102116"
+
+-- DESTINOS SEA 3
+local locais = {
+    ["Porto"] = CFrame.new(-439, 21, 5424),
+    ["Hydra"] = CFrame.new(5292, 1005, 395),
+    ["Great Tree"] = CFrame.new(3213, 2252, -7275),
+    ["Tartaruga"] = CFrame.new(-12552, 337, -7558),
+    ["Castelo do Mar"] = CFrame.new(-5106, 315, -2970),
+    ["Castelo Assombrado"] = CFrame.new(-9511, 142, 5542),
+    ["Ilha do Sorvete"] = CFrame.new(-869, 66, -10911),
+    ["Ilha do Amendoim"] = CFrame.new(-2203, 141, -10537),
+    ["Ilha do Bolo"] = CFrame.new(-1865, 40, -11814),
+    ["Ilha do Cacau"] = CFrame.new(217, 127, -12599),
+    ["Polo Norte"] = CFrame.new(-1093, 64, -14520),
+    ["Tiki"] = CFrame.new(-16896, 37, 382),
+    ["Dragon Dojo"] = CFrame.new(5703, 1207, 867)
+}
+
+--========================
+-- VARIÁVEIS
+--========================
+local ativo = false
+local destino = nil
+local velocidade = 295
+
+local function char()
+    return player.Character or player.CharacterAdded:Wait()
+end
+
+local function noclip(state)
+    for _, v in ipairs(char():GetDescendants()) do
+        if v:IsA("BasePart") then
+            v.CanCollide = not state
+        end
+    end
+end
+
+-- AUTO TRAVEL LOOP
+RunService.Heartbeat:Connect(function()
+    if not ativo or not destino then return end
+
+    local root = char():FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
+    noclip(true)
+
+    local dir = destino.Position - root.Position
+    if dir.Magnitude < 6 then
+        ativo = false
+        noclip(false)
+        root.Velocity = Vector3.zero
+        return
+    end
+
+    root.Velocity = dir.Unit * velocidade
+end)
+--========================
+-- TELEPORT UI (CATLIB)
+--========================
+
+local teleportTab = window:CreateTab({
+	Name = "Teleport",
+	Title = "Teleport",
+	Subtitle = "Auto Travel",
+	Icon = ICON
+})
+
+teleportTab:AddSection("Auto Travel")
+
+-- lista de nomes
+local nomes = {}
+for nome in pairs(locais) do
+	table.insert(nomes, nome)
+end
+
+-- dropdown
+teleportTab:AddDropdown({
+	Name = "Destino",
+	Options = nomes,
+	Default = nomes[1],
+	Callback = function(nomeSelecionado)
+		destino = locais[nomeSelecionado]
+	end
+})
+local ligado = false
+
+teleportTab:AddButton({
+	Name = "Auto Travel: OFF",
+	Callback = function(btn)
+		ligado = not ligado
+		ativo = ligado
+
+		btn:SetText("Auto Travel: " .. (ligado and "ON" or "OFF"))
+
+		if not ligado then
+			local root = char():FindFirstChild("HumanoidRootPart")
+			if root then root.Velocity = Vector3.zero end
+			noclip(false)
+		end
+	end
+})
+
+local OtherItemsTab = window:CreateTab({
+    Name = "Other Items",
+    Title = "Itens Extras",
+    Subtitle = "Mais opções",
+    Icon = "rbxassetid://94121909606356"
+})
+
+-- ===============================
+-- SEA EVENTOS COMPLETO INTEGRADO
+-- ===============================
+
+local SeaTab = window:CreateTab({
+    Name = "Sea eventos",
+    Title = "Sea eventos",
+    Subtitle = "Boat AutoPilot",
+    Icon = "rbxassetid://4567890123"
+})
+
+-- CFrames dos mares
+local SeaZones = {
+    ["Mar 1"] = CFrame.new(-21998, 0, -682),
+    ["Mar 2"] = CFrame.new(-26647, 2, -811),
+    ["Mar 3"] = CFrame.new(-30740, 6, -2116),
+    ["Mar 4"] = CFrame.new(-33642, 0, -2506),
+    ["Mar 5"] = CFrame.new(-38527, 0, -2177),
+    ["Mar 6"] = CFrame.new(-43761, 6, -1364),
+}
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Player = Players.LocalPlayer
+
+-- Configs
+local AutoPilot = false
+local TargetSea = "Mar 1"
+local BoatSpeed = 120
+local FloatHeight = 6
+
+-------------------------------------------------
+-- DETECTAR BARCO AUTOMÁTICO
+-------------------------------------------------
+local function GetBoat()
+    local char = Player.Character
+    if not char then return end
+
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    -- detectar seat conectado
+    for _, part in pairs(hrp:GetConnectedParts(true)) do
+        if part:IsA("VehicleSeat") then
+            return part:FindFirstAncestorOfClass("Model")
+        end
+    end
+
+    -- fallback: barco perto
+    for _, v in pairs(workspace:GetChildren()) do
+        if v:IsA("Model") and v:FindFirstChild("VehicleSeat") and v.PrimaryPart then
+            local dist = (v.PrimaryPart.Position - hrp.Position).Magnitude
+            if dist < 40 then
+                return v
+            end
+        end
+    end
+end
+
+-------------------------------------------------
+-- NOCLIP BARCO
+-------------------------------------------------
+local function BoatNoclip(model)
+    for _, v in pairs(model:GetDescendants()) do
+        if v:IsA("BasePart") then
+            v.CanCollide = false
+        end
+    end
+end
+
+-------------------------------------------------
+-- PARAR AUTOPILOT
+-------------------------------------------------
+local function StopBoat()
+    AutoPilot = false
+end
+
+-------------------------------------------------
+-- LOOP AUTOPILOT
+-------------------------------------------------
+task.spawn(function()
+    while task.wait() do
+        if AutoPilot then
+            local boat = GetBoat()
+
+            if boat and boat.PrimaryPart then
+                BoatNoclip(boat)
+
+                local targetCF = SeaZones[TargetSea]
+                if targetCF then
+                    local targetPos = targetCF.Position + Vector3.new(0, FloatHeight, 0)
+                    local current = boat.PrimaryPart.Position
+
+                    local dist = (targetPos - current).Magnitude
+                    if dist < 25 then
+                        AutoPilot = false -- chegou sozinho
+                    else
+                        local direction = (targetPos - current).Unit
+                        local newPos = current + direction * BoatSpeed * 0.03
+
+                        boat:SetPrimaryPartCFrame(
+                            CFrame.new(newPos, targetPos)
+                        )
+                    end
+                end
+            end
+        end
+    end
+end)
+
+-- ===============================
+-- CONTROLES UI
+-- ===============================
+
+-- DESTINO
+SeaTab:AddDropdown({
+    Name = "Destino do Mar",
+    Options = {"Mar 1","Mar 2","Mar 3","Mar 4","Mar 5","Mar 6"},
+    StartingOption = "Mar 1",
+    Callback = function(opt)
+        TargetSea = opt
+    end
+})
+
+-- VELOCIDADE
+SeaTab:AddSlider({
+    Name = "Velocidade do Barco",
+    Min = 40,
+    Max = 300,
+    Default = 120,
+    Callback = function(v)
+        BoatSpeed = v
+    end
+})
+
+-- ALTURA FLUTUANDO
+SeaTab:AddSlider({
+    Name = "Altura Flutuando",
+    Min = 2,
+    Max = 15,
+    Default = 6,
+    Callback = function(v)
+        FloatHeight = v
+    end
+})
+
+-- TOGGLE AUTOPILOT
+SeaTab:AddToggle({
+    Name = "AutoPilot Barco",
+    StartingState = false,
+    Callback = function(v)
+        AutoPilot = v
+    end
+})
+
+-- BOTÃO PARAR
+SeaTab:AddButton({
+    Name = "Parar AutoPilot",
+    Callback = function()
+        StopBoat()
+    end
+})
+
+local VisualTab = window:CreateTab({
+    Name = "Visual",
+    Title = "Visual",
+    Subtitle = "Modificações visuais",
+    Icon = "rbxassetid://130144488602871"
+})
+
