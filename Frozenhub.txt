@@ -25,7 +25,7 @@ local Player = Players.LocalPlayer
 
 local CurrentTargetIndex = 1
 local LastAttackTime = 0
-local AttackDelay = 0.12 -- mais rápido que o padrão
+local AttackDelay = 0.10 -- mais rápido que o padrão
 
 local CombatFrameworkLoaded = false
 local CombatFrameworkR, RigLib
@@ -139,150 +139,142 @@ local MainTab = window:CreateTab({
     Subtitle = "Tudo que você precisa",
     Icon = "rbxassetid://92602807830976"
 })
+-- =============================
+-- AUTO FARM COM BRING INTEGRADO
+-- =============================
 
--- =========================
--- CONFIG
--- =========================
 local FarmEnabled = false
-local FarmMode = "Ossos"
-local CurrentTarget = nil
+local FarmMode = "Nearest"
 
-local BringRadius = 60
-local HeightAboveMob = 18
+local HEIGHT = 17
+local FARM_RADIUS = 120
+local BRING_RADIUS = 1050
 
--- =========================
--- TOGGLE
--- =========================
+-- Toggle
 MainTab:AddToggle({
-    Name = "Ativar Farm",
+    Name = "Auto Farm",
     StartingState = false,
     Callback = function(state)
         FarmEnabled = state
-        if not state then
-            CurrentTarget = nil
-        end
     end
 })
 
--- =========================
--- DROPDOWN
--- =========================
+-- Dropdown
 MainTab:AddDropdown({
-    Name = "Modo de Farm",
-    Options = {"Farm Ossos", "Farm Nearest"},
+    Name = "Modo do Farm",
+    Options = {"Farm Nearest", "Farm Bone"},
     Callback = function(option)
-        if option == "Farm Ossos" then
-            FarmMode = "Ossos"
+        if option == "Farm Bone" then
+            FarmMode = "Bone"
         else
             FarmMode = "Nearest"
         end
-        CurrentTarget = nil
     end
 })
 
--- =========================
--- LOOP PRINCIPAL
--- =========================
-task.spawn(function()
-    while task.wait(0.15) do
-        if not FarmEnabled then
-            CurrentTarget = nil
-            continue
-        end
+-- =============================
+-- FUNÇÕES
+-- =============================
 
-        local player = game.Players.LocalPlayer
-        local char = player.Character
-        local root = char and char:FindFirstChild("HumanoidRootPart")
-        if not root then continue end
+local function getTarget()
+    local player = game.Players.LocalPlayer
+    local char = player.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
 
-        local enemiesFolder = workspace:FindFirstChild("Enemies")
-        if not enemiesFolder then continue end
+    local chosen
+    local dist = FARM_RADIUS
 
-        -- =========================
-        -- VERIFICA SE O ALVO MORREU
-        -- =========================
-        if CurrentTarget then
-            local hum = CurrentTarget:FindFirstChild("Humanoid")
-            if not hum or hum.Health <= 0 or not CurrentTarget.Parent then
-                CurrentTarget = nil
-            end
-        end
+    for _, mob in pairs(workspace.Enemies:GetChildren()) do
+        local hrp = mob:FindFirstChild("HumanoidRootPart")
+        local hum = mob:FindFirstChild("Humanoid")
 
-        -- =========================
-        -- BUSCAR NOVO GRUPO
-        -- =========================
-        if not CurrentTarget then
-            local closest = nil
-            local dist = math.huge
+        if hrp and hum and hum.Health > 0 then
 
-            for _, mob in pairs(enemiesFolder:GetChildren()) do
-                local hrp = mob:FindFirstChild("HumanoidRootPart")
-                local hum = mob:FindFirstChild("Humanoid")
-
-                if hrp and hum and hum.Health > 0 then
-
-                    -- FILTRO FARM OSSOS
-                    if FarmMode == "Ossos" then
-                        local name = mob.Name:lower()
-                        if not (
-                            name:find("mummy")
-                            or name:find("zombie")
-                            or name:find("skeleton")
-                            or name:find("reaper")
-                        ) then
-                            continue
-                        end
-                    end
-
-                    local magnitude = (root.Position - hrp.Position).Magnitude
-                    if magnitude < dist then
-                        dist = magnitude
-                        closest = mob
-                    end
+            if FarmMode == "Bone" then
+                if not (mob.Name:lower():find("possessed") 
+                    or mob.Name:lower():find("reaper") 
+                    or mob.Name:lower():find("living")) then
+                    continue
                 end
             end
 
-            CurrentTarget = closest
-        end
-
-        -- =========================
-        -- SE ACHOU ALVO
-        -- =========================
-        if CurrentTarget then
-            local targetHRP = CurrentTarget:FindFirstChild("HumanoidRootPart")
-            if not targetHRP then
-                CurrentTarget = nil
-                continue
+            local magnitude = (root.Position - hrp.Position).Magnitude
+            if magnitude < dist then
+                dist = magnitude
+                chosen = mob
             end
+        end
+    end
 
-            -- POSIÇÃO ACIMA DO MOB
-            root.CFrame = CFrame.new(
-                targetHRP.Position.X,
-                targetHRP.Position.Y + HeightAboveMob,
-                targetHRP.Position.Z
-            )
+    return chosen
+end
 
-            -- =========================
-            -- MINI BRING
-            -- =========================
-            for _, mob in pairs(enemiesFolder:GetChildren()) do
-                local hrp = mob:FindFirstChild("HumanoidRootPart")
-                local hum = mob:FindFirstChild("Humanoid")
 
-                if hrp and hum and hum.Health > 0 then
-                    local distance = (targetHRP.Position - hrp.Position).Magnitude
-                    if distance <= BringRadius then
-                        hrp.CFrame = targetHRP.CFrame * CFrame.new(
-                            math.random(-3,3),
-                            0,
-                            math.random(-3,3)
-                        )
+local function bringEnemies(centerMob)
+    local centerHRP = centerMob:FindFirstChild("HumanoidRootPart")
+    if not centerHRP then return end
+
+    for _, mob in pairs(workspace.Enemies:GetChildren()) do
+        if mob ~= centerMob then
+
+            local hrp = mob:FindFirstChild("HumanoidRootPart")
+            local hum = mob:FindFirstChild("Humanoid")
+
+            if hrp and hum and hum.Health > 0 then
+
+                if FarmMode == "Bone" then
+                    if not (mob.Name:lower():find("possessed") 
+                        or mob.Name:lower():find("reaper") 
+                        or mob.Name:lower():find("living")) then
+                        continue
                     end
+                end
+
+                local dist = (hrp.Position - centerHRP.Position).Magnitude
+
+                if dist <= BRING_RADIUS then
+                    hrp.CanCollide = false
+                    hrp.Velocity = Vector3.zero
+                    hrp.RotVelocity = Vector3.zero
+                    hrp.CFrame = centerHRP.CFrame
                 end
             end
         end
     end
+end
+
+
+local function stayAbove(mob)
+    local player = game.Players.LocalPlayer
+    local char = player.Character
+    if not char then return end
+
+    local root = char:FindFirstChild("HumanoidRootPart")
+    local hrp = mob:FindFirstChild("HumanoidRootPart")
+    if not root or not hrp then return end
+
+    root.CFrame = CFrame.new(hrp.Position + Vector3.new(0, HEIGHT, 0))
+    root.Velocity = Vector3.zero
+end
+
+-- =============================
+-- LOOP PRINCIPAL
+-- =============================
+
+task.spawn(function()
+    while task.wait(0.08) do
+        if not FarmEnabled then continue end
+
+        local target = getTarget()
+
+        if target then
+            stayAbove(target)
+            bringEnemies(target)
+        end
+    end
 end)
+
 --========================
 -- TELEPORT TAB (COM TRAVEL)
 --=d=======================
