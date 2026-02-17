@@ -186,7 +186,7 @@ task.spawn(function()
                 if hrp and hum and hum.Health > 0 then
                     if mob.Name:lower():find("possessed") or mob.Name:lower():find("reaper") then
                         -- Teleporta o player acima do NPC
-                        root.CFrame = hrp.CFrame * CFrame.new(0, 10, 0)
+                        root.CFrame = hrp.CFrame * CFrame.new(0, 19, 0)
                         break -- vai para o primeiro NPC encontrado
                     end
                 end
