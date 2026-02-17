@@ -15,6 +15,124 @@ local window = CatLib:CreateWindow({
         Shape = "square"
     }
 })
+-- =========================
+-- FAST ATTACK PASSIVO
+-- =========================
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Player = Players.LocalPlayer
+
+local CurrentTargetIndex = 1
+local LastAttackTime = 0
+local AttackDelay = 0.12 -- mais rápido que o padrão
+
+local CombatFrameworkLoaded = false
+local CombatFrameworkR, RigLib
+
+-- carregar combat framework
+local function LoadCombatFramework()
+    pcall(function()
+        local CF = Player:WaitForChild("PlayerScripts"):WaitForChild("CombatFramework")
+        local module = require(CF)
+        CombatFrameworkR = debug.getupvalues(module)[2]
+        RigLib = require(ReplicatedStorage.CombatFramework.RigLib)
+        CombatFrameworkLoaded = true
+    end)
+end
+task.spawn(LoadCombatFramework)
+
+-- pegar inimigos próximos
+local function GetNearbyEnemies()
+    local char = Player.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return {} end
+
+    local pos = char.HumanoidRootPart.Position
+    local list = {}
+
+    local enemiesFolder = workspace:FindFirstChild("Enemies")
+    if not enemiesFolder then return list end
+
+    for _, mob in pairs(enemiesFolder:GetChildren()) do
+        local hum = mob:FindFirstChild("Humanoid")
+        local hrp = mob:FindFirstChild("HumanoidRootPart")
+        if hum and hrp and hum.Health > 0 then
+            if (hrp.Position - pos).Magnitude <= 65 then -- range maior
+                table.insert(list, mob)
+            end
+        end
+    end
+    return list
+end
+
+-- ataque normal melhorado
+local function AttackRotation()
+    local enemies = GetNearbyEnemies()
+    if #enemies == 0 then
+        CurrentTargetIndex = 1
+        return
+    end
+
+    if CurrentTargetIndex > #enemies then
+        CurrentTargetIndex = 1
+    end
+
+    local enemy = enemies[CurrentTargetIndex]
+    CurrentTargetIndex += 1
+
+    local target = enemy:FindFirstChild("HumanoidRootPart") or enemy:FindFirstChild("UpperTorso")
+    if target then
+        pcall(function()
+            ReplicatedStorage.Modules.Net["RE/RegisterAttack"]:FireServer(0)
+            ReplicatedStorage.Modules.Net["RE/RegisterHit"]:FireServer(target, {{enemy, target}})
+        end)
+    end
+end
+
+-- fast attack real (premium style)
+local function FastAttackPremium()
+    if not CombatFrameworkLoaded then return end
+
+    local char = Player.Character
+    if not char then return end
+
+    local AC = CombatFrameworkR and CombatFrameworkR.activeController
+    if not AC or not AC.equipped then return end
+
+    local enemies = GetNearbyEnemies()
+    if #enemies == 0 then return end
+
+    pcall(function()
+        for _, enemy in pairs(enemies) do
+            local hrp = enemy:FindFirstChild("HumanoidRootPart") or enemy:FindFirstChild("UpperTorso")
+            if hrp and RigLib and RigLib.wrapAttackAnimationAsync then
+                local u1 = debug.getupvalue(RigLib.wrapAttackAnimationAsync, 2)
+                local u2 = debug.getupvalue(u1, 4)
+                local u3 = debug.getupvalue(u2, 6)
+                local u4 = debug.getupvalue(u3, 1)
+                local u5 = u4[1]
+                local u6 = u4[2]
+                pcall(function()
+                    u5({hrp}, 3, "", u6)
+                end)
+            end
+        end
+    end)
+end
+
+-- loop principal
+task.spawn(function()
+    while task.wait(0.03) do -- mais rápido que hubs comuns
+        local now = tick()
+        if now - LastAttackTime >= AttackDelay then
+            LastAttackTime = now
+
+            -- usa os dois juntos
+            FastAttackPremium()
+            AttackRotation()
+        end
+    end
+end)
 -- Pegue sua aba Main já criada
 local MainTab = window:CreateTab({
     Name = "Main",
@@ -299,176 +417,4 @@ local VisualTab = window:CreateTab({
     Title = "Visual",
     Subtitle = "Fast Attack System",
     Icon = "rbxassetid://7733960981"
-})
-
--- =========================
--- VARIÁVEIS
--- =========================
-local FastAttack = false
-local FastAttackV2 = false
-
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
-local Player = Players.LocalPlayer
-
-local CurrentTargetIndex = 1
-local LastAttackTime = 0
-local AttackDelay = 0.2
-local AttackCount = 0
-local MaxAttacksPerSecond = 15
-local LastResetTime = tick()
-
--- =========================
--- CARREGAR COMBAT FRAMEWORK
--- =========================
-local CombatFrameworkLoaded = false
-local CombatFrameworkR, RigLib
-
-local function LoadCombatFramework()
-    pcall(function()
-        local CF = Player:WaitForChild("PlayerScripts"):WaitForChild("CombatFramework")
-        local module = require(CF)
-        CombatFrameworkR = debug.getupvalues(module)[2]
-        RigLib = require(ReplicatedStorage.CombatFramework.RigLib)
-        CombatFrameworkLoaded = true
-    end)
-end
-task.spawn(LoadCombatFramework)
-
--- =========================
--- FUNÇÕES AUXILIARES
--- =========================
-local function SafeFire(remote, ...)
-    pcall(function() remote:FireServer(...) end)
-end
-
-local function GetNearbyEnemies()
-    local char = Player.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then return {} end
-
-    local pos = char.HumanoidRootPart.Position
-    local list = {}
-    local enemiesFolder = workspace:FindFirstChild("Enemies")
-    if not enemiesFolder then return list end
-
-    for _, mob in pairs(enemiesFolder:GetChildren()) do
-        local hum = mob:FindFirstChild("Humanoid")
-        local hrp = mob:FindFirstChild("HumanoidRootPart")
-        if hum and hrp and hum.Health > 0 then
-            if (hrp.Position - pos).Magnitude <= 60 then
-                table.insert(list, mob)
-            end
-        end
-    end
-    return list
-end
-
-local function AttackSingleTarget(enemy)
-    if not enemy or not enemy.Parent then return false end
-    local target = enemy:FindFirstChild("HumanoidRootPart") or enemy:FindFirstChild("UpperTorso")
-    if not target then return false end
-
-    local currentTime = tick()
-    if currentTime - LastResetTime >= 1 then
-        AttackCount = 0
-        LastResetTime = currentTime
-    end
-    if AttackCount >= MaxAttacksPerSecond then return false end
-
-    SafeFire(ReplicatedStorage.Modules.Net["RE/RegisterAttack"], 0)
-    SafeFire(ReplicatedStorage.Modules.Net["RE/RegisterHit"], target, {{enemy, target}})
-    AttackCount = AttackCount + 1
-    return true
-end
-
-local function AttackRotation()
-    local enemies = GetNearbyEnemies()
-    if #enemies == 0 then CurrentTargetIndex = 1 return false end
-
-    if CurrentTargetIndex > #enemies then CurrentTargetIndex = 1 end
-    local success = AttackSingleTarget(enemies[CurrentTargetIndex])
-    CurrentTargetIndex = CurrentTargetIndex + 1
-    return success
-end
-
-local function FastAttackPC()
-    if not CombatFrameworkLoaded then
-        task.spawn(LoadCombatFramework)
-        return false
-    end
-
-    local char = Player.Character
-    if not char then return false end
-    local AC = CombatFrameworkR.activeController
-    if not AC or not AC.equipped then return false end
-
-    local enemies = GetNearbyEnemies()
-    if #enemies == 0 then return false end
-
-    pcall(function()
-        for _, enemy in pairs(enemies) do
-            local hrp = enemy:FindFirstChild("HumanoidRootPart") or enemy:FindFirstChild("UpperTorso")
-            if hrp then
-                if RigLib and RigLib.wrapAttackAnimationAsync then
-                    -- Fast Attack estilo hub premium
-                    local u1 = debug.getupvalue(RigLib.wrapAttackAnimationAsync, 2)
-                    local u2 = debug.getupvalue(u1, 4)
-                    local u3 = debug.getupvalue(u2, 6)
-                    local u4 = debug.getupvalue(u3, 1)
-                    local u5 = u4[1]
-                    local u6 = u4[2]
-                    pcall(function()
-                        u5({hrp}, 3, "", u6)
-                    end)
-                end
-            end
-        end
-    end)
-    return true
-end
-
-local function MainAttack()
-    pcall(function()
-        local currentTime = tick()
-        if currentTime - LastAttackTime < AttackDelay then return end
-        LastAttackTime = currentTime
-
-        local usedFast = false
-        if FastAttackV2 then
-            usedFast = FastAttackPC()
-        end
-
-        if not usedFast and FastAttack then
-            AttackRotation()
-        end
-    end)
-end
-
--- =========================
--- LOOP GLOBAL
--- =========================
-task.spawn(function()
-    while task.wait() do
-        MainAttack()
-    end
-end)
-
--- =========================
--- BOTÕES NA UI
--- =========================
-VisualTab:AddToggle({
-    Name = "Fast Attack",
-    StartingState = false,
-    Callback = function(v)
-        FastAttack = v
-    end
-})
-
-VisualTab:AddToggle({
-    Name = "Fast Attack Melhorado",
-    StartingState = false,
-    Callback = function(v)
-        FastAttackV2 = v
-    end
 })
