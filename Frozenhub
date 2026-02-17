@@ -269,7 +269,28 @@ SeaTab:AddButton({
     end
 })
 
-local VisualTab = window:CreateTab({
+            end
+        end
+    end)
+    return true
+end
+
+local function MainAttack()
+    pcall(function()
+        local currentTime = tick()
+        if currentTime - LastAttackTime < AttackDelay then return end
+        LastAttackTime = currentTime
+
+        local usedFast = false
+        if FastAttackV2 then
+            usedFast = FastAttackPC()
+        end
+
+        if not usedFast and FastAttack then
+            AttackRotation()
+        end
+    end)
+end
 -- =========================
 -- ABA VISUAL - FAST ATTACK
 -- =========================
@@ -289,7 +310,6 @@ local FastAttackV2 = false
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
-local VirtualUser = game:GetService("VirtualUser")
 local Player = Players.LocalPlayer
 
 local CurrentTargetIndex = 1
@@ -391,7 +411,7 @@ local function FastAttackPC()
             local hrp = enemy:FindFirstChild("HumanoidRootPart") or enemy:FindFirstChild("UpperTorso")
             if hrp then
                 if RigLib and RigLib.wrapAttackAnimationAsync then
-                    -- Fast Attack real hub style
+                    -- Fast Attack estilo hub premium
                     local u1 = debug.getupvalue(RigLib.wrapAttackAnimationAsync, 2)
                     local u2 = debug.getupvalue(u1, 4)
                     local u3 = debug.getupvalue(u2, 6)
@@ -432,14 +452,6 @@ task.spawn(function()
     while task.wait() do
         MainAttack()
     end
-end)
-
--- =========================
--- ANTI-AFK
--- =========================
-Player.Idled:Connect(function()
-    VirtualUser:CaptureController()
-    VirtualUser:ClickButton2(Vector2.new())
 end)
 
 -- =========================
