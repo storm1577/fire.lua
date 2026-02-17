@@ -116,7 +116,132 @@ local SeaEventsTab = window:CreateTab({
 local VisualTab = window:CreateTab({
     Name = "Visual",
     Title = "Visual",
-    Subtitle = "Modificações visuais",
-    Icon = "rbxassetid://130144488602871"
+    Subtitle = "Fast Attack Settings",
+    Icon = "rbxassetid://130144488602"
 })
+
+-- Estados
+local FastAttack = false
+local FastAttackPro = false
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local VirtualUser = game:GetService("VirtualUser")
+
+local Player = Players.LocalPlayer
+
+-- Remotes
+local Modules = ReplicatedStorage:WaitForChild("Modules")
+local RegisterAttack = Modules.Net:WaitForChild("RE/RegisterAttack")
+local RegisterHit = Modules.Net:WaitForChild("RE/RegisterHit")
+
+----------------------------------------------------
+-- FUNÇÕES
+----------------------------------------------------
+
+local function GetEnemies()
+    local list = {}
+    local char = Player.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return list end
+
+    local pos = char.HumanoidRootPart.Position
+
+    for _, mob in pairs(workspace.Enemies:GetChildren()) do
+        local hum = mob:FindFirstChild("Humanoid")
+        local hrp = mob:FindFirstChild("HumanoidRootPart")
+        if hum and hrp and hum.Health > 0 then
+            if (hrp.Position - pos).Magnitude <= 60 then
+                table.insert(list, mob)
+            end
+        end
+    end
+    return list
+end
+
+----------------------------------------------------
+-- FAST ATTACK NORMAL
+----------------------------------------------------
+local function NormalAttack()
+    local enemies = GetEnemies()
+    for _, enemy in pairs(enemies) do
+        local target = enemy:FindFirstChild("HumanoidRootPart")
+        if target then
+            RegisterAttack:FireServer(0)
+            RegisterHit:FireServer(target, {{enemy, target}})
+        end
+    end
+end
+
+----------------------------------------------------
+-- FAST ATTACK MELHORADO
+----------------------------------------------------
+local CombatFrameworkLoaded = false
+local CombatFrameworkR
+
+local function LoadCF()
+    pcall(function()
+        local CF = require(Player.PlayerScripts:WaitForChild("CombatFramework"))
+        CombatFrameworkR = debug.getupvalues(CF)[2]
+        CombatFrameworkLoaded = true
+    end)
+end
+task.spawn(LoadCF)
+
+local function ProAttack()
+    if not CombatFrameworkLoaded then return end
+
+    local AC = CombatFrameworkR.activeController
+    if not AC or not AC.equipped then return end
+
+    local enemies = GetEnemies()
+    for _, enemy in pairs(enemies) do
+        local hrp = enemy:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            ReplicatedStorage.RigControllerEvent:FireServer("hit", {hrp}, 2, "")
+        end
+    end
+end
+
+----------------------------------------------------
+-- LOOP PRINCIPAL
+----------------------------------------------------
+task.spawn(function()
+    while task.wait() do
+        if FastAttack then
+            pcall(NormalAttack)
+        end
+
+        if FastAttackPro then
+            pcall(ProAttack)
+        end
+    end
+end)
+
+----------------------------------------------------
+-- TOGGLES
+----------------------------------------------------
+
+VisualTab:AddToggle({
+    Name = "Fast Attack",
+    StartingState = false,
+    Callback = function(v)
+        FastAttack = v
+    end
+})
+
+VisualTab:AddToggle({
+    Name = "Fast Attack Melhorado",
+    StartingState = false,
+    Callback = function(v)
+        FastAttackPro = v
+    end
+})
+
+----------------------------------------------------
+-- ANTI AFK
+----------------------------------------------------
+Player.Idled:Connect(function()
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton2(Vector2.new())
+end)
 
