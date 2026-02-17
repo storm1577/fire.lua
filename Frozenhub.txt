@@ -137,81 +137,148 @@ local MainTab = window:CreateTab({
     Name = "Main",
     Title = "Main Features",
     Subtitle = "Tudo que você precisa",
-    Icon = "rbxassetid://92602807830976" -- coloque seu ícone
+    Icon = "rbxassetid://92602807830976"
 })
 
--- Variáveis de controle
+-- =========================
+-- CONFIG
+-- =========================
 local FarmEnabled = false
-local FarmMode = "Ossos" -- padrão
+local FarmMode = "Ossos"
+local CurrentTarget = nil
 
--- Toggle (ligar/desligar farm)
+local BringRadius = 60
+local HeightAboveMob = 18
+
+-- =========================
+-- TOGGLE
+-- =========================
 MainTab:AddToggle({
     Name = "Ativar Farm",
     StartingState = false,
     Callback = function(state)
         FarmEnabled = state
-        print("Farm ativado:", state)
+        if not state then
+            CurrentTarget = nil
+        end
     end
 })
 
--- Dropdown para escolher o tipo de farm
+-- =========================
+-- DROPDOWN
+-- =========================
 MainTab:AddDropdown({
     Name = "Modo de Farm",
     Options = {"Farm Ossos", "Farm Nearest"},
     Callback = function(option)
         if option == "Farm Ossos" then
             FarmMode = "Ossos"
-        elseif option == "Farm Nearest" then
+        else
             FarmMode = "Nearest"
         end
-        print("Modo selecionado:", FarmMode)
+        CurrentTarget = nil
     end
 })
 
--- Loop principal do farm
+-- =========================
+-- LOOP PRINCIPAL
+-- =========================
 task.spawn(function()
-    while task.wait(0.2) do
-        if not FarmEnabled then continue end -- se desligado, pula
+    while task.wait(0.15) do
+        if not FarmEnabled then
+            CurrentTarget = nil
+            continue
+        end
 
         local player = game.Players.LocalPlayer
         local char = player.Character
         local root = char and char:FindFirstChild("HumanoidRootPart")
         if not root then continue end
 
-        -- FARM OSSOS (NPCs do Castelo Assombrado)
-        if FarmMode == "Ossos" then
-            for _, mob in pairs(workspace.Enemies:GetChildren()) do
-                local hrp = mob:FindFirstChild("HumanoidRootPart")
-                local hum = mob:FindFirstChild("Humanoid")
-                if hrp and hum and hum.Health > 0 then
-                    if mob.Name:lower():find("possessed") or mob.Name:lower():find("reaper") then
-                        -- Teleporta o player acima do NPC
-                        root.CFrame = hrp.CFrame * CFrame.new(0, 10, 0)
-                        break -- vai para o primeiro NPC encontrado
-                    end
-                end
+        local enemiesFolder = workspace:FindFirstChild("Enemies")
+        if not enemiesFolder then continue end
+
+        -- =========================
+        -- VERIFICA SE O ALVO MORREU
+        -- =========================
+        if CurrentTarget then
+            local hum = CurrentTarget:FindFirstChild("Humanoid")
+            if not hum or hum.Health <= 0 or not CurrentTarget.Parent then
+                CurrentTarget = nil
             end
         end
 
-        -- FARM NEAREST (NPC mais próximo)
-        if FarmMode == "Nearest" then
+        -- =========================
+        -- BUSCAR NOVO GRUPO
+        -- =========================
+        if not CurrentTarget then
             local closest = nil
             local dist = math.huge
 
-            for _, mob in pairs(workspace.Enemies:GetChildren()) do
+            for _, mob in pairs(enemiesFolder:GetChildren()) do
                 local hrp = mob:FindFirstChild("HumanoidRootPart")
                 local hum = mob:FindFirstChild("Humanoid")
+
                 if hrp and hum and hum.Health > 0 then
+
+                    -- FILTRO FARM OSSOS
+                    if FarmMode == "Ossos" then
+                        local name = mob.Name:lower()
+                        if not (
+                            name:find("mummy")
+                            or name:find("zombie")
+                            or name:find("skeleton")
+                            or name:find("reaper")
+                        ) then
+                            continue
+                        end
+                    end
+
                     local magnitude = (root.Position - hrp.Position).Magnitude
                     if magnitude < dist then
                         dist = magnitude
-                        closest = hrp
+                        closest = mob
                     end
                 end
             end
 
-            if closest then
-                root.CFrame = closest.CFrame * CFrame.new(0, 10, 0)
+            CurrentTarget = closest
+        end
+
+        -- =========================
+        -- SE ACHOU ALVO
+        -- =========================
+        if CurrentTarget then
+            local targetHRP = CurrentTarget:FindFirstChild("HumanoidRootPart")
+            if not targetHRP then
+                CurrentTarget = nil
+                continue
+            end
+
+            -- POSIÇÃO ACIMA DO MOB
+            root.CFrame = CFrame.new(
+                targetHRP.Position.X,
+                targetHRP.Position.Y + HeightAboveMob,
+                targetHRP.Position.Z
+            )
+
+            -- =========================
+            -- MINI BRING
+            -- =========================
+            for _, mob in pairs(enemiesFolder:GetChildren()) do
+                local hrp = mob:FindFirstChild("HumanoidRootPart")
+                local hum = mob:FindFirstChild("Humanoid")
+
+                if hrp and hum and hum.Health > 0 then
+                    local distance = (targetHRP.Position - hrp.Position).Magnitude
+                    if distance <= BringRadius then
+                        hrp.CFrame = targetHRP.CFrame * CFrame.new(
+                            math.random(-3,3),
+                            0,
+                            math.random(-3,3)
+                        )
+                    end
+                end
             end
         end
     end
