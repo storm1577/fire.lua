@@ -1,0 +1,18 @@
+local CatLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/realcath/lab/refs/heads/main/libary/catliby"))()
+
+local window = CatLib:CreateWindow({
+    Title = "kryzen hub",
+    Subtitle = "u.i By zerozxk",
+    Icon = "rbxassetid://121339025686432",
+    Size = UDim2.new(0, 500, 0, 300),
+    Theme = "Stormx",
+    ColorfulLetters = true,
+    FloatingButton = {
+        Enabled = true,
+        Icon = "rbxassetid://121339025686432",
+        Size = UDim2.new(0, 60, 0, 60),
+        Position = UDim2.new(0, 20, 0, 100),
+        Shape = "square"
+    }
+})
+
