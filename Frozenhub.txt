@@ -335,11 +335,167 @@ local OtherItemsTab = window:CreateTab({
     Icon = "rbxassetid://94121909606356"
 })
 
-local SeaEventsTab = window:CreateTab({
-    Name = "Sea Events",
-    Title = "Eventos do Mar",
-    Subtitle = "Teleporte e eventos",
-    Icon = "rbxassetid://119720690487986"
+-- ===============================
+-- SEA EVENTOS COMPLETO INTEGRADO
+-- ===============================
+
+local SeaTab = window:CreateTab({
+    Name = "Sea eventos",
+    Title = "Sea eventos",
+    Subtitle = "Boat AutoPilot",
+    Icon = "rbxassetid://4567890123"
+})
+
+-- CFrames dos mares
+local SeaZones = {
+    ["Mar 1"] = CFrame.new(-21998, 0, -682),
+    ["Mar 2"] = CFrame.new(-26647, 2, -811),
+    ["Mar 3"] = CFrame.new(-30740, 6, -2116),
+    ["Mar 4"] = CFrame.new(-33642, 0, -2506),
+    ["Mar 5"] = CFrame.new(-38527, 0, -2177),
+    ["Mar 6"] = CFrame.new(-43761, 6, -1364),
+}
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Player = Players.LocalPlayer
+
+-- Configs
+local AutoPilot = false
+local TargetSea = "Mar 1"
+local BoatSpeed = 120
+local FloatHeight = 6
+
+-------------------------------------------------
+-- DETECTAR BARCO AUTOMÁTICO
+-------------------------------------------------
+local function GetBoat()
+    local char = Player.Character
+    if not char then return end
+
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    -- detectar seat conectado
+    for _, part in pairs(hrp:GetConnectedParts(true)) do
+        if part:IsA("VehicleSeat") then
+            return part:FindFirstAncestorOfClass("Model")
+        end
+    end
+
+    -- fallback: barco perto
+    for _, v in pairs(workspace:GetChildren()) do
+        if v:IsA("Model") and v:FindFirstChild("VehicleSeat") and v.PrimaryPart then
+            local dist = (v.PrimaryPart.Position - hrp.Position).Magnitude
+            if dist < 40 then
+                return v
+            end
+        end
+    end
+end
+
+-------------------------------------------------
+-- NOCLIP BARCO
+-------------------------------------------------
+local function BoatNoclip(model)
+    for _, v in pairs(model:GetDescendants()) do
+        if v:IsA("BasePart") then
+            v.CanCollide = false
+        end
+    end
+end
+
+-------------------------------------------------
+-- PARAR AUTOPILOT
+-------------------------------------------------
+local function StopBoat()
+    AutoPilot = false
+end
+
+-------------------------------------------------
+-- LOOP AUTOPILOT
+-------------------------------------------------
+task.spawn(function()
+    while task.wait() do
+        if AutoPilot then
+            local boat = GetBoat()
+
+            if boat and boat.PrimaryPart then
+                BoatNoclip(boat)
+
+                local targetCF = SeaZones[TargetSea]
+                if targetCF then
+                    local targetPos = targetCF.Position + Vector3.new(0, FloatHeight, 0)
+                    local current = boat.PrimaryPart.Position
+
+                    local dist = (targetPos - current).Magnitude
+                    if dist < 25 then
+                        AutoPilot = false -- chegou sozinho
+                    else
+                        local direction = (targetPos - current).Unit
+                        local newPos = current + direction * BoatSpeed * 0.03
+
+                        boat:SetPrimaryPartCFrame(
+                            CFrame.new(newPos, targetPos)
+                        )
+                    end
+                end
+            end
+        end
+    end
+end)
+
+-- ===============================
+-- CONTROLES UI
+-- ===============================
+
+-- DESTINO
+SeaTab:AddDropdown({
+    Name = "Destino do Mar",
+    Options = {"Mar 1","Mar 2","Mar 3","Mar 4","Mar 5","Mar 6"},
+    StartingOption = "Mar 1",
+    Callback = function(opt)
+        TargetSea = opt
+    end
+})
+
+-- VELOCIDADE
+SeaTab:AddSlider({
+    Name = "Velocidade do Barco",
+    Min = 40,
+    Max = 300,
+    Default = 120,
+    Callback = function(v)
+        BoatSpeed = v
+    end
+})
+
+-- ALTURA FLUTUANDO
+SeaTab:AddSlider({
+    Name = "Altura Flutuando",
+    Min = 2,
+    Max = 15,
+    Default = 6,
+    Callback = function(v)
+        FloatHeight = v
+    end
+})
+
+-- TOGGLE AUTOPILOT
+SeaTab:AddToggle({
+    Name = "AutoPilot Barco",
+    StartingState = false,
+    Callback = function(v)
+        AutoPilot = v
+    end
+})
+
+-- BOTÃO PARAR
+SeaTab:AddButton({
+    Name = "Parar AutoPilot",
+    Callback = function()
+        StopBoat()
+    end
 })
 
 local VisualTab = window:CreateTab({
