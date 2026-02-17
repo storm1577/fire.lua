@@ -25,7 +25,7 @@ local Player = Players.LocalPlayer
 
 local CurrentTargetIndex = 1
 local LastAttackTime = 0
-local AttackDelay = 0.12 -- mais rápido que o padrão
+local AttackDelay = 0.9 -- mais rápido que o padrão
 
 local CombatFrameworkLoaded = false
 local CombatFrameworkR, RigLib
