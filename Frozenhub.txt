@@ -137,7 +137,90 @@ local MainTab = window:CreateTab({
     Name = "Main",
     Title = "Main Features",
     Subtitle = "Tudo que você precisa",
-    Icon = "rbxassetid://92602807830976" -- coloque o ID da imagem que você quer
+    Icon = "rbxassetid://92602807830976" -- coloque seu ícone
+})
+
+-- Variáveis de controle
+local FarmEnabled = false
+local FarmMode = "Ossos" -- padrão
+
+-- Toggle (ligar/desligar farm)
+MainTab:AddToggle({
+    Name = "Ativar Farm",
+    StartingState = false,
+    Callback = function(state)
+        FarmEnabled = state
+        print("Farm ativado:", state)
+    end
+})
+
+-- Dropdown para escolher o tipo de farm
+MainTab:AddDropdown({
+    Name = "Modo de Farm",
+    Options = {"Farm Ossos", "Farm Nearest"},
+    Callback = function(option)
+        if option == "Farm Ossos" then
+            FarmMode = "Ossos"
+        elseif option == "Farm Nearest" then
+            FarmMode = "Nearest"
+        end
+        print("Modo selecionado:", FarmMode)
+    end
+})
+
+-- Loop principal do farm
+task.spawn(function()
+    while task.wait(0.2) do
+        if not FarmEnabled then continue end -- se desligado, pula
+
+        local player = game.Players.LocalPlayer
+        local char = player.Character
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        if not root then continue end
+
+        -- FARM OSSOS (NPCs do Castelo Assombrado)
+        if FarmMode == "Ossos" then
+            for _, mob in pairs(workspace.Enemies:GetChildren()) do
+                local hrp = mob:FindFirstChild("HumanoidRootPart")
+                local hum = mob:FindFirstChild("Humanoid")
+                if hrp and hum and hum.Health > 0 then
+                    if mob.Name:lower():find("possessed") or mob.Name:lower():find("reaper") then
+                        -- Teleporta o player acima do NPC
+                        root.CFrame = hrp.CFrame * CFrame.new(0, 10, 0)
+                        break -- vai para o primeiro NPC encontrado
+                    end
+                end
+            end
+        end
+
+        -- FARM NEAREST (NPC mais próximo)
+        if FarmMode == "Nearest" then
+            local closest = nil
+            local dist = math.huge
+
+            for _, mob in pairs(workspace.Enemies:GetChildren()) do
+                local hrp = mob:FindFirstChild("HumanoidRootPart")
+                local hum = mob:FindFirstChild("Humanoid")
+                if hrp and hum and hum.Health > 0 then
+                    local magnitude = (root.Position - hrp.Position).Magnitude
+                    if magnitude < dist then
+                        dist = magnitude
+                        closest = hrp
+                    end
+                end
+            end
+
+            if closest then
+                root.CFrame = closest.CFrame * CFrame.new(0, 10, 0)
+            end
+        end
+    end
+end)
+local OtherItemsTab = window:CreateTab({
+    Name = "Other Items",
+    Title = "Itens Extras",
+    Subtitle = "Mais opções",
+    Icon = "rbxassetid://94121909606356"
 })
 
 local OtherItemsTab = window:CreateTab({
