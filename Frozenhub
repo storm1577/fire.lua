@@ -15,6 +15,7 @@ local window = CatLib:CreateWindow({
         Shape = "square"
     }
 })
+repeat task.wait() until game:IsLoaded()
 -- =========================
 -- FAST ATTACK PASSIVO
 -- =========================
