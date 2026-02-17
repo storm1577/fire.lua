@@ -216,11 +216,116 @@ task.spawn(function()
         end
     end
 end)
-local OtherItemsTab = window:CreateTab({
-    Name = "Other Items",
-    Title = "Itens Extras",
-    Subtitle = "Mais opções",
-    Icon = "rbxassetid://94121909606356"
+--========================
+-- TELEPORT TAB (COM TRAVEL)
+--=d=======================
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+
+-- ÍCONE DA ABA
+local ICON = "rbxassetid://104148559102116"
+
+-- DESTINOS SEA 3
+local locais = {
+    ["Porto"] = CFrame.new(-439, 21, 5424),
+    ["Hydra"] = CFrame.new(5292, 1005, 395),
+    ["Great Tree"] = CFrame.new(3213, 2252, -7275),
+    ["Tartaruga"] = CFrame.new(-12552, 337, -7558),
+    ["Castelo do Mar"] = CFrame.new(-5106, 315, -2970),
+    ["Castelo Assombrado"] = CFrame.new(-9511, 142, 5542),
+    ["Ilha do Sorvete"] = CFrame.new(-869, 66, -10911),
+    ["Ilha do Amendoim"] = CFrame.new(-2203, 141, -10537),
+    ["Ilha do Bolo"] = CFrame.new(-1865, 40, -11814),
+    ["Ilha do Cacau"] = CFrame.new(217, 127, -12599),
+    ["Polo Norte"] = CFrame.new(-1093, 64, -14520),
+    ["Tiki"] = CFrame.new(-16896, 37, 382),
+    ["Dragon Dojo"] = CFrame.new(5703, 1207, 867)
+}
+
+--========================
+-- VARIÁVEIS
+--========================
+local ativo = false
+local destino = nil
+local velocidade = 295
+
+local function char()
+    return player.Character or player.CharacterAdded:Wait()
+end
+
+local function noclip(state)
+    for _, v in ipairs(char():GetDescendants()) do
+        if v:IsA("BasePart") then
+            v.CanCollide = not state
+        end
+    end
+end
+
+-- AUTO TRAVEL LOOP
+RunService.Heartbeat:Connect(function()
+    if not ativo or not destino then return end
+
+    local root = char():FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
+    noclip(true)
+
+    local dir = destino.Position - root.Position
+    if dir.Magnitude < 6 then
+        ativo = false
+        noclip(false)
+        root.Velocity = Vector3.zero
+        return
+    end
+
+    root.Velocity = dir.Unit * velocidade
+end)
+--========================
+-- TELEPORT UI (CATLIB)
+--========================
+
+local teleportTab = window:CreateTab({
+	Name = "Teleport",
+	Title = "Teleport",
+	Subtitle = "Auto Travel",
+	Icon = ICON
+})
+
+teleportTab:AddSection("Auto Travel")
+
+-- lista de nomes
+local nomes = {}
+for nome in pairs(locais) do
+	table.insert(nomes, nome)
+end
+
+-- dropdown
+teleportTab:AddDropdown({
+	Name = "Destino",
+	Options = nomes,
+	Default = nomes[1],
+	Callback = function(nomeSelecionado)
+		destino = locais[nomeSelecionado]
+	end
+})
+local ligado = false
+
+teleportTab:AddButton({
+	Name = "Auto Travel: OFF",
+	Callback = function(btn)
+		ligado = not ligado
+		ativo = ligado
+
+		btn:SetText("Auto Travel: " .. (ligado and "ON" or "OFF"))
+
+		if not ligado then
+			local root = char():FindFirstChild("HumanoidRootPart")
+			if root then root.Velocity = Vector3.zero end
+			noclip(false)
+		end
+	end
 })
 
 local OtherItemsTab = window:CreateTab({
