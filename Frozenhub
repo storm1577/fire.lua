@@ -15,4 +15,31 @@ local window = CatLib:CreateWindow({
         Shape = "square"
     }
 })
+local MainTab = window:CreateTab({
+    Name = "Main",
+    Title = "Main Features",
+    Subtitle = "Tudo que você precisa",
+    Icon = "rbxassetid://1234567890" -- coloque o ID da imagem que você quer
+})
+
+local OtherItemsTab = window:CreateTab({
+    Name = "Other Items",
+    Title = "Itens Extras",
+    Subtitle = "Mais opções",
+    Icon = "rbxassetid://2345678901"
+})
+
+local SeaEventsTab = window:CreateTab({
+    Name = "Sea Events",
+    Title = "Eventos do Mar",
+    Subtitle = "Teleporte e eventos",
+    Icon = "rbxassetid://3456789012"
+})
+
+local VisualTab = window:CreateTab({
+    Name = "Visual",
+    Title = "Visual",
+    Subtitle = "Modificações visuais",
+    Icon = "rbxassetid://4567890123"
+})
 
