@@ -40,6 +40,6 @@ local VisualTab = window:CreateTab({
     Name = "Visual",
     Title = "Visual",
     Subtitle = "Modificações visuais",
-    Icon = "rbxassetid://4567890123"
+    Icon = "rbxassetid://130144488602871"
 })
 
